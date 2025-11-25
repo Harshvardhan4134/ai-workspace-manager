@@ -1,0 +1,34 @@
+Issue Type,Summary,Description,Status
+Epic,EPIC-1 Authentication & Profiles,"Google Auth, Firestore profiles, employee directory.",To Do
+Story,STORY-1.1 Google Sign-In,"Implement Firebase Auth on React, verify ID token in FastAPI middleware.",To Do
+Story,STORY-1.2 Firestore Users API,"CRUD endpoints for users with skills, capacity, avatar.",To Do
+Story,STORY-1.3 Profile UI,"Profile page with editing, avatar upload via GCS signed URL.",To Do
+Story,STORY-1.4 Employee List,"Sortable table with status badges and search.",To Do
+Epic,EPIC-2 Task System,"Kanban board, task CRUD, attachments, watchers.",To Do
+Story,STORY-2.1 Task CRUD API,"FastAPI router + Firestore schema validations.",To Do
+Story,STORY-2.2 Kanban UI,"React board + modal create/edit form.",To Do
+Story,STORY-2.3 Attachments Pipeline,"Signed URL workflow, preview cards.",To Do
+Story,STORY-2.4 Activity Log,"Watcher list, timeline of changes per task.",To Do
+Epic,EPIC-3 AI Engine,"Gemini prompts for auto-assign, flowchart, overload.",To Do
+Story,STORY-3.1 MCP Bridge,"Service calling Gemini with assignment prompt contract.",To Do
+Story,STORY-3.2 Flowchart Prediction,"AI step predictor + UI visualization.",To Do
+Story,STORY-3.3 Chat Summaries,"Summarize button + AI 'next action' guidance.",To Do
+Story,STORY-3.4 Overload Insights,"Endpoint + dashboard alerts for capacity issues.",To Do
+Epic,EPIC-4 Chat & Collaboration,"Realtime task messaging with attachments.",To Do
+Story,STORY-4.1 Firestore Listener,"React hook for live chat updates.",To Do
+Story,STORY-4.2 Chat Attachments,"Reuse upload flow inside chat composer.",To Do
+Story,STORY-4.3 Typing + AI Summary,"Typing indicator + summarizer action.",To Do
+Epic,EPIC-5 Calendar & Meetings,"Scheduling, ICS export, AI meeting suggestions.",To Do
+Story,STORY-5.1 Meeting Scheduler,"Meeting creation UI + Firestore storage.",To Do
+Story,STORY-5.2 AI Meeting Suggest,"MCP prompt returning attendees/time/day.",To Do
+Story,STORY-5.3 ICS/Google Sync,"Generate ICS & optional Google Calendar push.",To Do
+Epic,EPIC-6 Dashboard & Analytics,"Workload charts, status pies, AI alerts.",To Do
+Story,STORY-6.1 Charts,"Recharts components for workload + status.",To Do
+Story,STORY-6.2 AI Alerts,"Surface overload/deadline warnings.",To Do
+Story,STORY-6.3 Flowchart Board,"Visual flow of active tasks.",To Do
+Epic,EPIC-7 Deployment & Demo,"Cloud Run infra, hosting, demo data.",To Do
+Story,STORY-7.1 Cloud Run Deploy,"Dockerize FastAPI + deploy pipeline.",To Do
+Story,STORY-7.2 Frontend Hosting,"Vite build + Firebase Hosting config.",To Do
+Story,STORY-7.3 Observability,"Logging/Sentry + health endpoints.",To Do
+Story,STORY-7.4 Demo Seed & Script,"Seed Firestore + prep 60s walkthrough.",To Do
+

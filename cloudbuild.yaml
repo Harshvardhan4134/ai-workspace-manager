@@ -1,0 +1,40 @@
+# Cloud Build configuration for deploying to Cloud Run
+# Trigger this from Google Cloud Console > Cloud Build
+
+steps:
+  # Build the Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/ai-workspace-backend', './backend']
+
+  # Push to Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/ai-workspace-backend']
+
+  # Deploy to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'ai-workspace-backend'
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/ai-workspace-backend'
+      - '--region'
+      - 'us-central1'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--memory'
+      - '1Gi'
+      - '--cpu'
+      - '1'
+      - '--timeout'
+      - '300'
+      - '--set-env-vars'
+      - 'GCP_PROJECT=$PROJECT_ID,AI_AGENT_BASE_URL=http://localhost:8081'
+
+images:
+  - 'gcr.io/$PROJECT_ID/ai-workspace-backend'
+
+options:
+  logging: CLOUD_LOGGING_ONLY

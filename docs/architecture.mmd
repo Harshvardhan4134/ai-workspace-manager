@@ -1,0 +1,43 @@
+```mermaid
+flowchart LR
+  subgraph Client["React Frontend (Vite + TS)"]
+    A1[Firebase Auth SDK]
+    A2[Firestore listeners]
+    A3[REST/GraphQL hooks]
+    A4[Upload UI]
+  end
+
+  subgraph API["FastAPI on Cloud Run"]
+    B1[Auth middleware]
+    B2[Task/Message routers]
+    B3[AIAgent service]
+    B4[GCS signed URL svc]
+    B5[Meeting scheduler]
+  end
+
+  subgraph Data["Google Cloud"]
+    C1[Firestore]
+    C2[GCS buckets]
+  end
+
+  subgraph AI["MCP + Gemini"]
+    D1[Assignment Prompt]
+    D2[Flowchart Next-Step]
+    D3[Overload Report]
+    D4[Chat Summary]
+  end
+
+  A1 -->|ID token| B1
+  A2 -->|Realtime read| C1
+  A3 -->|HTTPS| B2
+  A4 -->|Signed URL PUT| C2
+
+  B2 -->|CRUD| C1
+  B4 -->|Generate URL| C2
+  B3 -->|Prompt| AI
+  AI -->|JSON result| B3
+  B5 -->|Meetings| C1
+
+  B2 -->|Event hooks| B5
+```
+

@@ -1,0 +1,43 @@
+You are building “AI Workspace Manager”, a Jira-grade workflows OS for hackathon demo + Rentshare use.
+
+Tech stack:
+- Frontend: React + Vite + TypeScript, Firebase Auth, Firestore listeners, Recharts, React Flow, FullCalendar.
+- Backend: FastAPI on Cloud Run, Firestore Admin SDK, GCS signed URLs, MCP bridge to Gemini models.
+
+Functional pillars:
+1. Auth & Profiles: Google login, employee list, profile editor w/ avatar upload & skills/capacity.
+2. Tasks: Jira-style issues (Kanban board, modal create/edit, watchers, attachments, activity log).
+3. Chat: Task-level real-time messages (Firestore snapshots), attachments, AI summarize & next-step actions.
+4. AI Engine: Auto-assign (hours, best member, deadline, priority, flowchart_next_step, meeting suggestions, reason), overload detection, chat summarizer.
+5. Calendar: Meeting scheduler + AI recommendations, ICS export/Google Calendar optional.
+6. Dashboard: Task stats, workload bars, priority distribution, AI alerts, flowchart visualization.
+7. Deployment: Cloud Run backend, Firebase Hosting frontend, .env templates, demo seed.
+
+Constraints:
+- Verify Firebase ID tokens in FastAPI middleware before accessing Firestore.
+- All uploads handled via signed URLs (backend returns PUT URL + final public URL).
+- AI responses validated w/ Pydantic models and fallbacks if Gemini unavailable.
+- Chat uses Firestore listeners client-side but writes go through FastAPI for auditing.
+- Provide sample data + configuration docs for hackathon judges.
+
+Deliverables:
+- Backend `/app` package: routers (auth, tasks, messages, meetings, attachments, agent), services (firestore, gcs, ai_agent, calendar), models, config, tests/mocks.
+- Frontend `src/` structure: pages (Dashboard, Tasks, TaskDetail drawer, Employees, Calendar, Settings), components (TaskCard, FlowchartPanel, ChatPanel, MeetingList, ProfileForm), hooks for Firestore streams, context for auth.
+- Docs: README (setup + Cloud Run deploy), env examples, seed script, prompt catalogue.
+
+Coding standards:
+- Type-safe (TypeScript, Pydantic models).
+- Reusable hooks and services (no inline fetch).
+- Tailwind/utility CSS or styled components? Use CSS modules if simpler.
+- Provide tests where feasible (unit tests for AI service fallback, React component tests for TaskBoard).
+
+Process:
+1. Scaffold backend -> auth middleware -> Firestore service -> tasks router.
+2. Implement AI service w/ mock fallback + typed responses.
+3. Build React layout (sidebar + main content) -> Kanban board -> drawer chat.
+4. Add dashboard charts, calendar page, meeting creation modal.
+5. Wire AI buttons (auto-assign, summarize, overload) end-to-end.
+6. Prepare deployment artifacts & demo instructions.
+
+Always ensure lint/test pass before final output.
+

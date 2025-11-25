@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+
+# Build output (we rebuild in Docker)
+dist/
+
+# Environment
+.env
+.env.*
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Testing
+coverage/
+.nyc_output/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+README.md
+docs/
+

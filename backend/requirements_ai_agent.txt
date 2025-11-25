@@ -1,0 +1,9 @@
+# AI Agent Server Requirements (Google ADK)
+# For BNB Marathon 2025 - Using Google Agent Development Kit
+
+google-adk>=1.19.0
+google-genai>=1.45.0
+fastapi>=0.115.0
+uvicorn[standard]>=0.34.0
+pydantic>=2.0
+httpx>=0.28.0
