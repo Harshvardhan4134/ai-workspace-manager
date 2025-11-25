@@ -4,6 +4,7 @@ import { apiFetch } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import { uploadToGcs } from "../utils/upload";
 import type { Task } from "../types";
+import { USE_MOCK_DATA } from "../mockData";
 
 interface Props {
   onCreated: () => void;
@@ -21,9 +22,28 @@ const TaskComposer: React.FC<Props> = ({ onCreated }) => {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!token) return;
     setLoading(true);
     const formData = new FormData(event.currentTarget);
+    
+    if (USE_MOCK_DATA) {
+      // Simulate delay
+      await new Promise(r => setTimeout(r, 800));
+      console.log("Mock task created:", {
+        title: formData.get("title"),
+        customer_name: customerName,
+        project_name: projectName,
+      });
+      setAttachments([]);
+      setPrdFile(null);
+      setCustomerName("");
+      setProjectName("");
+      (event.target as HTMLFormElement).reset();
+      onCreated();
+      setLoading(false);
+      return;
+    }
+    
+    if (!token) return;
     let attachmentUrls: string[] = [];
     if (attachments.length) {
       attachmentUrls = await Promise.all(attachments.map((file) => uploadToGcs(file, token)));
@@ -141,4 +161,3 @@ const TaskComposer: React.FC<Props> = ({ onCreated }) => {
 };
 
 export default TaskComposer;
-

@@ -5,12 +5,26 @@ from fastapi import APIRouter, HTTPException, Depends
 
 from app.auth import AuthUser, get_current_user
 from app.models import Task, TaskCreate, TaskUpdate
-from app.services.firestore import FirestoreService
-from app.services.ai_agent import AIAgentService
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
-firestore_service = FirestoreService()
-ai_service = AIAgentService()
+
+# Lazy initialization to avoid import-time failures
+_firestore_service = None
+_ai_service = None
+
+def get_firestore_service():
+    global _firestore_service
+    if _firestore_service is None:
+        from app.services.firestore import FirestoreService
+        _firestore_service = FirestoreService()
+    return _firestore_service
+
+def get_ai_service():
+    global _ai_service
+    if _ai_service is None:
+        from app.services.ai_agent import AIAgentService
+        _ai_service = AIAgentService()
+    return _ai_service
 
 
 @router.get("/", response_model=List[Task])
@@ -24,11 +38,12 @@ def list_tasks(
         filters["status"] = status
     if priority:
         filters["priority"] = priority
-    return firestore_service.list_tasks(filters if filters else None)
+    return get_firestore_service().list_tasks(filters if filters else None)
 
 
 @router.post("/", response_model=Task, status_code=201)
 async def create_task(task: TaskCreate, current_user: AuthUser = Depends(get_current_user)):
+    firestore = get_firestore_service()
     now = datetime.utcnow().isoformat()
     payload = task.model_dump(exclude_unset=True)
     payload.update(
@@ -47,9 +62,9 @@ async def create_task(task: TaskCreate, current_user: AuthUser = Depends(get_cur
             ],
         }
     )
-    team = firestore_service.list_users()
+    team = firestore.list_users()
     try:
-        ai_prediction = await ai_service.predict_assignment(payload, team)
+        ai_prediction = await get_ai_service().predict_assignment(payload, team)
         payload.update(
             {
                 "predicted_hours": ai_prediction.predicted_hours,
@@ -65,21 +80,22 @@ async def create_task(task: TaskCreate, current_user: AuthUser = Depends(get_cur
     except ValueError as e:
         # AI agent not available - continue without AI predictions
         payload["ai_reason"] = f"AI unavailable: {str(e)}"
-    firestore_service.create_task(payload)
+    firestore.create_task(payload)
     return payload
 
 
 @router.get("/{task_id}", response_model=Task)
 def get_task(task_id: str, current_user: AuthUser = Depends(get_current_user)):
     try:
-        return firestore_service.get_task(task_id)
+        return get_firestore_service().get_task(task_id)
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 
 
 @router.patch("/{task_id}", response_model=Task)
 def update_task(task_id: str, task: TaskUpdate, current_user: AuthUser = Depends(get_current_user)):
-    existing = firestore_service.get_task(task_id)
+    firestore = get_firestore_service()
+    existing = firestore.get_task(task_id)
     payload = task.model_dump(exclude_unset=True)
     now = datetime.utcnow().isoformat()
     payload["updated_at"] = now
@@ -89,17 +105,18 @@ def update_task(task_id: str, task: TaskUpdate, current_user: AuthUser = Depends
     if "watchers" in payload:
         payload["watchers"] = list({*payload["watchers"], current_user.uid})
     try:
-        return firestore_service.update_task(task_id, payload)
+        return firestore.update_task(task_id, payload)
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 
 
 @router.post("/{task_id}/auto-assign", response_model=Task)
 async def auto_assign(task_id: str, current_user: AuthUser = Depends(get_current_user)):
-    task = firestore_service.get_task(task_id)
-    team = firestore_service.list_users()
+    firestore = get_firestore_service()
+    task = firestore.get_task(task_id)
+    team = firestore.list_users()
     try:
-        ai_prediction = await ai_service.predict_assignment(task, team)
+        ai_prediction = await get_ai_service().predict_assignment(task, team)
         update_payload = {
             "assigned_to": ai_prediction.best_member_id,
             "predicted_hours": ai_prediction.predicted_hours,
@@ -116,7 +133,7 @@ async def auto_assign(task_id: str, current_user: AuthUser = Depends(get_current
     activity_log = task.get("activity_log", [])
     activity_log.append({"timestamp": update_payload["updated_at"], "actor": current_user.uid, "action": "Auto-assigned"})
     update_payload["activity_log"] = activity_log
-    updated = firestore_service.update_task(task_id, update_payload)
+    updated = firestore.update_task(task_id, update_payload)
     return updated
 
 

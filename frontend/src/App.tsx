@@ -13,6 +13,7 @@ import Sidebar from "./components/Sidebar";
 import HeaderBar from "./components/HeaderBar";
 import OnboardingModal from "./components/OnboardingModal";
 import ErrorBanner from "./components/ErrorBanner";
+import { USE_MOCK_DATA } from "./mockData";
 
 const queryClient = new QueryClient();
 
@@ -67,12 +68,14 @@ function AppShell() {
       <Sidebar />
       <main className="main">
         <HeaderBar />
-        <ErrorBanner
-          message="Firestore database setup required: Create the database in Google Cloud Console and ensure your service account has 'Cloud Datastore User' role. This enables task management, chat, and all workspace features."
-          actionUrl="https://console.cloud.google.com/datastore/setup?project=bnbm-harsh-2025"
-          actionText="Open Setup Guide →"
-          storageKey="firestore_setup_banner_dismissed"
-        />
+        {!USE_MOCK_DATA && (
+          <ErrorBanner
+            message="Firestore database setup required: Create the database in Google Cloud Console and ensure your service account has 'Cloud Datastore User' role. This enables task management, chat, and all workspace features."
+            actionUrl="https://console.cloud.google.com/datastore/setup?project=bnbm-harsh-2025"
+            actionText="Open Setup Guide →"
+            storageKey="firestore_setup_banner_dismissed"
+          />
+        )}
         <div className="content">
           <Routes>
             <Route path="/" element={<Navigate to="/dashboard" />} />

@@ -5,10 +5,18 @@ from fastapi import APIRouter, Depends, HTTPException, Response
 
 from app.auth import AuthUser, get_current_user
 from app.models import Meeting, MeetingCreate
-from app.services.firestore import FirestoreService
 
 router = APIRouter(prefix="/meetings", tags=["meetings"])
-firestore_service = FirestoreService()
+
+# Lazy initialization to avoid import-time failures
+_firestore_service = None
+
+def get_firestore_service():
+    global _firestore_service
+    if _firestore_service is None:
+        from app.services.firestore import FirestoreService
+        _firestore_service = FirestoreService()
+    return _firestore_service
 
 
 @router.get("/", response_model=List[Meeting])
@@ -17,7 +25,7 @@ def list_meetings(
     current_user: AuthUser = Depends(get_current_user),
 ):
     filters = {"task_id": task_id} if task_id else None
-    return firestore_service.list_meetings(filters)
+    return get_firestore_service().list_meetings(filters)
 
 
 @router.post("/", response_model=Meeting, status_code=201)
@@ -25,14 +33,14 @@ def create_meeting(meeting: MeetingCreate, current_user: AuthUser = Depends(get_
     payload = meeting.model_dump(exclude_unset=True)
     payload["created_by"] = current_user.uid
     payload["created_at"] = datetime.utcnow().isoformat()
-    firestore_service.create_meeting(payload)
+    get_firestore_service().create_meeting(payload)
     return payload
 
 
 @router.get("/{meeting_id}/ics", response_class=Response, responses={200: {"content": {"text/calendar": {}}}})
 def meeting_ics(meeting_id: str, current_user: AuthUser = Depends(get_current_user)):
     try:
-        meeting = firestore_service.get_meeting(meeting_id)
+        meeting = get_firestore_service().get_meeting(meeting_id)
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     ics = _build_ics(meeting)

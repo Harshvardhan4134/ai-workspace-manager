@@ -4,6 +4,7 @@ import { apiFetch } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import type { Message, Task, TaskStatus } from "../types";
 import { uploadToGcs } from "../utils/upload";
+import { USE_MOCK_DATA, MOCK_MESSAGES, MOCK_EMPLOYEES } from "../mockData";
 
 interface Props {
   task: Task;
@@ -51,6 +52,16 @@ const TaskDrawer: React.FC<Props> = ({ task, onClose, onTaskUpdated }) => {
   const watchersText = useMemo(() => localTask.watchers?.join(", ") || "None", [localTask.watchers]);
 
   const loadMessages = async () => {
+    if (USE_MOCK_DATA) {
+      const mockMsgs = MOCK_MESSAGES[task.id] || [];
+      // Add sender names from mock employees
+      const enrichedMsgs = mockMsgs.map(msg => ({
+        ...msg,
+        sender_id: MOCK_EMPLOYEES.find(e => e.id === msg.sender_id)?.name || msg.sender_id,
+      }));
+      setMessages(enrichedMsgs);
+      return;
+    }
     if (!token) return;
     try {
       const data = await apiFetch<Message[]>(`/messages/${task.id}`, { token });
@@ -61,18 +72,34 @@ const TaskDrawer: React.FC<Props> = ({ task, onClose, onTaskUpdated }) => {
   };
 
   useEffect(() => {
-    if (task.id && token) {
+    if (task.id && (token || USE_MOCK_DATA)) {
       loadMessages();
     }
     const interval = setInterval(() => {
-      if (task.id && token) loadMessages();
+      if (task.id && (token || USE_MOCK_DATA)) loadMessages();
     }, 10000);
     return () => clearInterval(interval);
   }, [task.id, token]);
 
   const handleSendMessage = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!chatInput.trim() || !token) return;
+    if (!chatInput.trim()) return;
+    
+    if (USE_MOCK_DATA) {
+      const newMsg: Message = {
+        id: `msg-${Date.now()}`,
+        task_id: task.id,
+        sender_id: "You",
+        text: chatInput.trim(),
+        attachments: [],
+        created_at: new Date().toISOString(),
+      };
+      setMessages(prev => [...prev, newMsg]);
+      setChatInput("");
+      return;
+    }
+    
+    if (!token) return;
     await apiFetch("/messages/", {
       method: "POST",
       token,
@@ -87,8 +114,20 @@ const TaskDrawer: React.FC<Props> = ({ task, onClose, onTaskUpdated }) => {
   };
 
   const handleSummarize = async () => {
-    if (!token) return;
     setAiThinking(true);
+    
+    if (USE_MOCK_DATA) {
+      await new Promise(r => setTimeout(r, 1500));
+      const mockSummaries: Record<string, string> = {
+        "task-001": "OAuth flow implementation in progress • Token refresh handling added • Expected completion: end of week — Active Development",
+        "task-002": "Wireframes submitted for review • Quick-actions panel requested • Waiting for stakeholder feedback — Under Review",
+      };
+      setSummary(mockSummaries[task.id] || "Team is making good progress • Key milestones on track • No blockers identified — On Track");
+      setAiThinking(false);
+      return;
+    }
+    
+    if (!token) return;
     try {
       const data = await apiFetch<{ bullets: string[]; status: string; next_step?: string }>(
         `/messages/${task.id}/summarize`,
@@ -102,8 +141,24 @@ const TaskDrawer: React.FC<Props> = ({ task, onClose, onTaskUpdated }) => {
   };
 
   const handleFlowchartPrediction = async () => {
-    if (!token) return;
     setAiThinking(true);
+    
+    if (USE_MOCK_DATA) {
+      await new Promise(r => setTimeout(r, 1200));
+      const mockPredictions: Record<string, { step: string; action: string }> = {
+        "task-001": { step: "Code Review", action: "Schedule PR review with team lead before merging" },
+        "task-002": { step: "Stakeholder Approval", action: "Present wireframes in design review meeting" },
+        "task-003": { step: "Environment Setup", action: "Configure GitHub repository secrets for CI/CD" },
+        "task-005": { step: "Unblock Dependencies", action: "Complete dashboard design review first" },
+        "task-007": { step: "Integration Testing", action: "Test API responses with sample prompts" },
+      };
+      const prediction = mockPredictions[task.id] || { step: "Implementation", action: "Continue with current approach" };
+      setSummary(`Next: ${prediction.step} · ${prediction.action}`);
+      setAiThinking(false);
+      return;
+    }
+    
+    if (!token) return;
     try {
       const data = await apiFetch<{ flowchart_next_step: string; recommended_action: string }>(
         "/agent/flowchart",
@@ -121,8 +176,19 @@ const TaskDrawer: React.FC<Props> = ({ task, onClose, onTaskUpdated }) => {
   };
 
   const handleAttachmentUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (!event.target.files?.length || !token) return;
+    if (!event.target.files?.length) return;
     const file = event.target.files[0];
+    
+    if (USE_MOCK_DATA) {
+      const mockUrl = `https://storage.example.com/uploads/${file.name}`;
+      const attachments = [...(localTask.attachments ?? []), mockUrl];
+      setLocalTask({ ...localTask, attachments });
+      onTaskUpdated();
+      event.target.value = "";
+      return;
+    }
+    
+    if (!token) return;
     try {
       const url = await uploadToGcs(file, token);
       const attachments = [...(localTask.attachments ?? []), url];
@@ -140,6 +206,12 @@ const TaskDrawer: React.FC<Props> = ({ task, onClose, onTaskUpdated }) => {
   };
 
   const handleStatusChange = async (status: TaskStatus) => {
+    if (USE_MOCK_DATA) {
+      setLocalTask({ ...localTask, status });
+      onTaskUpdated();
+      return;
+    }
+    
     if (!token) return;
     try {
       const updated = await apiFetch<Task>(`/tasks/${task.id}`, {
@@ -155,6 +227,13 @@ const TaskDrawer: React.FC<Props> = ({ task, onClose, onTaskUpdated }) => {
   };
 
   const handleSaveEdit = async () => {
+    if (USE_MOCK_DATA) {
+      setLocalTask({ ...localTask, ...editForm });
+      setIsEditing(false);
+      onTaskUpdated();
+      return;
+    }
+    
     if (!token) return;
     try {
       const updated = await apiFetch<Task>(`/tasks/${task.id}`, {
