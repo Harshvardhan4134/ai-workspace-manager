@@ -25,14 +25,6 @@ const statusColors: Record<string, string> = {
   completed: "#22c55e",
 };
 
-const priorityLabels: Record<number, { label: string; color: string }> = {
-  1: { label: "Lowest", color: "#64748b" },
-  2: { label: "Low", color: "#22c55e" },
-  3: { label: "Medium", color: "#fbbf24" },
-  4: { label: "High", color: "#f97316" },
-  5: { label: "Critical", color: "#ef4444" },
-};
-
 // Mock recent activity
 const mockActivity = [
   { id: 1, user: "Alice Johnson", action: "completed", target: "User Authentication", time: "2 hours ago", avatar: "👩‍💻" },
@@ -84,19 +76,6 @@ const DashboardPage = () => {
       })),
     [employees],
   );
-
-  const priorityData = useMemo(() => {
-    const counts: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-    tasks.forEach((task) => {
-      const p = task.priority || 3;
-      counts[p] = (counts[p] || 0) + 1;
-    });
-    return Object.entries(counts).map(([priority, count]) => ({
-      name: priorityLabels[Number(priority)]?.label || "Medium",
-      value: count,
-      fill: priorityLabels[Number(priority)]?.color || "#fbbf24",
-    }));
-  }, [tasks]);
 
   const completedThisWeek = tasks.filter((t) => t.status === "completed").length;
   const totalTasks = tasks.length;

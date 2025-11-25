@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { apiFetch } from "../api/client";
 import { useAuth } from "../context/AuthContext";
@@ -48,8 +48,6 @@ const TaskDrawer: React.FC<Props> = ({ task, onClose, onTaskUpdated }) => {
       complexity: task.complexity || "medium",
     });
   }, [task]);
-
-  const watchersText = useMemo(() => localTask.watchers?.join(", ") || "None", [localTask.watchers]);
 
   const loadMessages = async () => {
     if (USE_MOCK_DATA) {
@@ -326,8 +324,8 @@ const TaskDrawer: React.FC<Props> = ({ task, onClose, onTaskUpdated }) => {
             <div style={{ 
               padding: "0.5rem 1rem", 
               borderRadius: "6px", 
-              background: localTask.priority >= 4 ? "#fef2f2" : "#f1f5f9",
-              color: localTask.priority >= 4 ? "#dc2626" : "#475569",
+              background: (localTask.priority ?? 3) >= 4 ? "#fef2f2" : "#f1f5f9",
+              color: (localTask.priority ?? 3) >= 4 ? "#dc2626" : "#475569",
               fontWeight: 500,
             }}>
               P{localTask.priority || 3} - {["Lowest", "Low", "Medium", "High", "Critical"][(localTask.priority || 3) - 1]}
