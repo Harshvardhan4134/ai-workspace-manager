@@ -24,14 +24,49 @@ class AIAgentService:
                 response.raise_for_status()
                 return response.json()
         except httpx.ConnectError:
-            # Connection error - AI agent not running
-            raise ValueError(
-                f"AI agent not available at {self._agent_base_url}. "
-                f"Please ensure the MCP agent is running or set AI_AGENT_BASE_URL in your .env file."
-            )
+            # Connection error - AI agent not running, return fallback
+            print(f"Warning: AI agent not available at {self._agent_base_url}")
+            return self._get_fallback(path)
         except httpx.HTTPError as e:
-            # HTTP error - log and re-raise
-            raise ValueError(f"AI agent error: {str(e)}")
+            # HTTP error - return fallback
+            print(f"AI agent error: {str(e)}")
+            return self._get_fallback(path)
+    
+    def _get_fallback(self, path: str) -> Dict[str, Any]:
+        """Return fallback responses when AI agent is unavailable."""
+        fallbacks = {
+            "/assignment": {
+                "predicted_hours": 8.0,
+                "best_member_id": None,
+                "priority": 3,
+                "deadline": None,
+                "flowchart_next_step": "Development",
+                "required_meeting": False,
+                "meeting_suggestion": None,
+                "reason": "AI agent unavailable - using default values"
+            },
+            "/summarize": {
+                "bullets": ["AI summary unavailable"],
+                "status": "In progress",
+                "next_step": "Continue work"
+            },
+            "/overload": {
+                "overloaded": [],
+                "suggestions": ["AI analysis unavailable"]
+            },
+            "/meeting": {
+                "attendees": [],
+                "duration": 30,
+                "day": None,
+                "reason": "AI agent unavailable"
+            },
+            "/flowchart": {
+                "flowchart_next_step": "Development",
+                "blockers": [],
+                "recommended_action": "Continue with current task"
+            }
+        }
+        return fallbacks.get(path, {})
 
     async def predict_assignment(
         self, task_payload: Dict[str, Any], team: List[Dict[str, Any]]
